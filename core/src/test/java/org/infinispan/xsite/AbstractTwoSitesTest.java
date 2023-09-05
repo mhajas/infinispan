@@ -85,6 +85,7 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
    protected GlobalConfigurationBuilder globalConfigurationBuilderForSite(String siteName) {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       builder.serialization().addContextInitializer(TestDataSCI.INSTANCE);
+      builder.metrics().namesAsTags(true);
       return builder;
    }
 

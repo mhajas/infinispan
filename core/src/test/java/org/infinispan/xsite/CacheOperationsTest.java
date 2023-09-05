@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 
 import javax.transaction.TransactionManager;
 
+import io.micrometer.core.instrument.Meter;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -22,6 +23,7 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.marshall.core.MarshallableFunctions;
+import org.infinispan.metrics.impl.MetricsCollector;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -57,6 +59,7 @@ public class CacheOperationsTest extends AbstractTwoSitesTest {
       if (lockingMode != null) {
          cb.transaction().lockingMode(lockingMode);
       }
+      cb.statistics().enable();
       return cb;
    }
 
@@ -82,6 +85,14 @@ public class CacheOperationsTest extends AbstractTwoSitesTest {
    public void testPutAll() {
       testPutAll(LON);
       testPutAll(NYC);
+
+      MetricsCollector metricsCollector = site(LON).cacheManagers().get(0).getGlobalComponentRegistry().getComponent(MetricsCollector.class);
+      for (Meter m : metricsCollector.registry().getMeters()) {
+         if (m.getId().getName().contains("xsite") && m.getId().getTags().stream().anyMatch(t -> t.getKey().equals("site") && t.getValue().equals("NYC-2"))) {
+            System.out.println((m.getId().getTags().stream().anyMatch(t -> t.getKey().equals("site")) ? "t" : "f") + " " + m.getId().getName() + " - " + m.getId().getTags() + " - " + m.measure().iterator().next().getValue());
+         }
+      }
+      System.out.println("asd");
    }
 
    private void testRemove(String site) {
